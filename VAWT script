@@ -1,0 +1,2332 @@
+/PREP7 
+
+*Dim,UnitWidth,array,20,,,,,,,
+*Dim,HoleDiam,array,20,,,,,,,
+*Dim,BladeWeight,array,20,,,,,,,
+*Dim,OriginalBladeWeight,array,20,,,,,,,
+*Dim,Iterations,array,20,,,,,,,
+*Dim,Step,array,20,,,,,,,
+
+
+!General Variables 
+  
+W2=3         !Width of central untis of non-perforated model 
+L0=0.127     !x-coordinate of leading edge 
+L1=0.95355   !x-coordinate of first shear web
+L2=3.1785    !x-coordinateof second shear web
+L3=6.357     !x-coordinate of leading edge 
+H0=0.087366  !y-coordinate of leading edge
+H1=0.54151   !y-coordinate of top horizontal section  (average of shear web y coordinates about chord line) 
+div=4        !Line divisions applied to all lines in perforated model - This must be defined based off mesh a convergence study
+div1=4       !Line divisions applied to all lines in non-perforated model - This must be defined based off a mesh convergence study 
+C2=5        !Copies of internal wing section for un-perforated model
+elem1=div1*2 !Calculating the number of elements per unit block of the wing (unperforated blade)
+elem2=div*2  !Calculating the number of elements per unit nlock of the wing (perforated blade)
+
+!Shear Cap 
+S1=(19.08e-3)/2      !Shell thickness UD
+S2=(8.48e-3)/2 	     !Shell thickness BIAX
+S3=15.625e-3         !Shell thickness Core
+
+!Leading Edge 
+S4=7.85e-3          !Shell thickness UD
+
+!Trailling Edge 
+S5=(8.48e-3)/2       !Shell thickness BIAX
+S6=15.625e-3         !Shell thickness Core
+
+!Shear Web
+S7=(19.08e-3)/2	     !Shell thickness UD
+S8=15.625e-3         !Shell thickness Core 
+
+LD=0 	             !Large displacements are on if LD=1
+L=500                !UDL in N/m and per shear web 
+
+!Unperofrated model
+FP1=L*(W2/(elem1))   !Force applied to nodes 
+!Perforated model
+FP2=L*(W2/(elem2))   !Force applied to nodes 
+
+kn=1        	     !Used to run unperforated model first
+
+!Suppress error messages to improve code flow 
+/UIS,MSGPOP,4        !Rember to disable this commmand when writting code
+/UIS, Label, VALUE
+/UIS, MSGPOP, 3
+
+C1=C2                !Copies of internal wing section
+
+
+
+
+!Perforated model specifc parameters
+
+
+!Deifining parameters specfic to following section of code
+e1=1e-3     		!tolerance for hole convergence
+STARTD=0.25  	 	!Initial guess for hole size 
+STARTW=3    	 	!Initial guess for unit width  
+MaxDiam= 0.4	 	!Max hole diameter that remains within vertical LE boundaries 
+FA = 1.08 		!Allowance for perfroated blade deflection 
+MaxDef=dendv1*FA    	!This must be changed once proper tests begin, it is a 
+AF = 2			!Acceleration factor
+MinW = 1		!Minimum width of unit 
+Ediv = 2		!Tolerance divider 
+HF=2			!Minimum hole spacing 
+
+
+*Do,v3,1,3,1    !Number of loops created
+
+divH = 0.04 	 	!Sarting disturbance vector - Hole 
+
+!RUN UNPERFORATED MODEL /////////////////////////////////////////////////////////////////////////////////////////
+
+/PREP7  
+
+aclear,all
+edele,all,all
+ndele,all,all
+adele,all,all
+ldele,all,all
+kdele,all,all
+
+
+ET,1,SHELL281  
+
+!Note, the actual denisties are as follows:
+!UD: 1900
+!BIAX: 1900
+!Core: 200
+!Gelcoat and Nexus - Not used in the analysis (Negligible effect)
+
+!LEGEND OF MATERIALS USED 
+!Spar Cap Mat density - 1284.898(0.043185)= 55.488  	Mat 1
+!Shear Web Mat density - 1134.62(0.034705)= 39.377  	Mat 2
+!Leading Edge Mat density - 1900(0.008712)= 16.553	Mat 3
+!Trailling Edge Mat density - 798.06(0.024105)= 19.237	Mat 4
+
+!The desnities used below are the densities of the four individual sections of the blade
+!The smass script uses the density assigned to the material
+!The section properties are assumed to overide the material properties 
+
+!Defining the material mechanical properties
+			!Unidirectional Composite 
+MPTEMP,,,,,,,,  
+MPTEMP,1,0  
+MPDATA,EX,1,,14e9   
+MPDATA,EY,1,,14e9   
+MPDATA,EZ,1,,43e9   
+MPDATA,PRXY,1,,0.1  
+MPDATA,PRYZ,1,,0.1  
+MPDATA,PRXZ,1,,0.3  
+MPDATA,GXY,1,,2e9   
+MPDATA,GYZ,1,,4.3e9   
+MPDATA,GXZ,1,,4.5e9 
+MPDATA,DENS,1,,55.488  !Change the density here 
+
+			!Bi-directional Composite 
+MPTEMP,,,,,,,,  
+MPTEMP,1,0  
+MPDATA,EX,2,,11e9   
+MPDATA,EY,2,,12e9   
+MPDATA,EZ,2,,13e9   
+MPDATA,PRXY,2,,0.2  
+MPDATA,PRYZ,2,,0.2  
+MPDATA,PRXZ,2,,0.6  
+MPDATA,GXY,2,,2e9   
+MPDATA,GYZ,2,,2e9   
+MPDATA,GXZ,2,,9.5e9 
+MPDATA,DENS,2,,39.377   !Change the density here 
+
+			!Core
+MPTEMP,,,,,,,,  
+MPTEMP,1,0  
+MPDATA,EX,3,,0.25e9   
+MPDATA,EY,3,,0.25e9    
+MPDATA,EZ,3,,0.25e9    
+MPDATA,PRXY,3,,0.35  
+MPDATA,PRYZ,3,,0.35  
+MPDATA,PRXZ,3,,0.35  
+MPDATA,GXY,3,,0.085e9   
+MPDATA,GYZ,3,,0.085e9    
+MPDATA,GXZ,3,,0.085e9 
+MPDATA,DENS,3,,16.553     !Change the density here  
+
+			!Gelcoat Nexus 
+MPTEMP,,,,,,,,  
+MPTEMP,1,0  
+MPDATA,EX,4,,3.44e9   
+MPDATA,EY,4,,3.44e9    
+MPDATA,EZ,4,,3.44e9    
+MPDATA,PRXY,4,,0.3  
+MPDATA,PRYZ,4,,0.3  
+MPDATA,PRXZ,4,,0.3  
+MPDATA,GXY,4,,1.38e9   
+MPDATA,GYZ,4,,1.38e9    
+MPDATA,GXZ,4,,1.38e9 
+MPDATA,DENS,4,,19.237   !Change the density here  
+
+
+
+sect,1,shell,,     !Shear Caps   
+secdata, S2,2,0,3     !BIAX
+secdata, S1,1,0,3     !UD
+secdata, S3,3,0,3     !Core
+secdata, S1,1,0.0,3   !UD
+secdata, S2,2,0,3   !BIAX
+secoffset,MID   
+seccontrol,0,0,0, 0, 1, 1, 1
+
+sect,2,shell,,    !Shear Webs    
+secdata, S7,1,0,3    !UD
+secdata, S8,3,0,3    !Core
+secdata, S7,1,0,3    !UD
+secoffset,MID   
+seccontrol,0,0,0, 0, 1, 1, 1
+
+sect,3,shell,,    !Leading Edge     
+secdata, S4,2,0,3    !BIAX
+secoffset,MID   
+seccontrol,0,0,0, 0, 1, 1, 1
+
+sect,4,shell,,    !Trailling Edge    
+secdata, S5,2,0,3    !BIAX
+secdata, S6,3,0,3    !Core
+secdata, S5,2,0,3  !BIAX
+secoffset,MID   
+seccontrol,0,0,0, 0, 1, 1, 1
+
+
+!Following section creates unit of blade to be copied 
+
+!Oultine of turbine blade 
+K,1,L0,0,0,  
+K,2,L0,H0,0,   
+K,3,L1,H1,0,
+K,4,L2,H1,0,  
+K,5,L3,0,0, 
+K,6,L1,0,0,
+K,7,L2,0,0,
+
+!Offset profile 
+K,8,L0,0,W2,  
+K,9,L0,H0,W2,   
+K,10,L1,H1,W2,
+K,11,L2,H1,W2,  
+K,12,L3,0,W2, 
+K,13,L1,0,W2,
+K,14,L2,0,W2,
+
+!Points to divide area around hole 
+!First shear web
+K,15,L1,H1/2,0,  !9 coclock position 
+K,16,L1,H1/2,W2, !3 oclock position 
+K,17,L1,0,W2/2   !6 oclock position 
+K,18,L1,H1,W2/2  !12 oclcok position 
+
+!Second shear web 
+K,19,L2,H1/2,0,  !9 coclock position 
+K,26,L2,H1/2,W2, !3 oclock position 
+K,21,L2,0,W2/2   !6 oclock position 
+K,22,L2,H1,W2/2  !12 oclcok position 
+
+!Mid-points to accomodate lines from holes 
+K,23,L0,0,W2/2,  
+K,24,L0,H0,W2/2,   
+K,25,L3,0,W2/2, 
+
+
+!Lines to create front vertical panel 
+LSTR,       1,       23  
+LSTR,       23,      24  
+LSTR,       24,      2  
+LSTR,       2,       1
+LSTR,       23,      8  
+LSTR,       8,       9 
+LSTR,       9,       24
+
+!Lines to create front angled panel  
+LSTR,       2,       3 
+LSTR,       24,      18
+LSTR,       9,       10 
+
+!Line to create top horizontal panel 
+LSTR,       3,       18  
+LSTR,       18,      22  
+LSTR,       22,      4  
+LSTR,       4,       3
+LSTR,       18,      10  
+LSTR,       10,      11  
+LSTR,       11,      22
+
+!Line to create angles rear panel 
+LSTR,       4,       5 
+LSTR,       22,      25 
+LSTR,       11,      12  
+LSTR,       5,       25 
+LSTR,       25,      12  
+
+
+!Line completing shear webs 
+LSTR,      7,       19
+LSTR,      19,      4
+LSTR,      21,      22  
+LSTR,      14,      26
+LSTR,      26,      11 
+LSTR,      13,      16
+LSTR,      16,      10
+LSTR,      17,      18 
+LSTR,      6,       15
+LSTR,      15,      3
+
+FLST,2,2,4,ORDE,2   
+FITEM,2,25  
+FITEM,2,30  
+LDIV,P51X,0.5, ,2,0 
+
+!Lines across shear web 
+LSTR,      20,      26 
+LSTR,      20,      19
+LSTR,      21,      14 
+LSTR,      21,      7
+LSTR,      27,      16 
+LSTR,      27,      15
+LSTR,      17,      13
+LSTR,      17,      6
+
+
+!Creating area 
+!Front vertical 
+FLST,2,4,4  
+FITEM,2,1   
+FITEM,2,2   
+FITEM,2,3   
+FITEM,2,4   
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,5   
+FITEM,2,6   
+FITEM,2,7   
+FITEM,2,2   
+AL,P51X 
+
+!Front angled 
+FLST,2,4,4  
+FITEM,2,3   
+FITEM,2,9   
+FITEM,2,11  
+FITEM,2,8   
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,7   
+FITEM,2,10  
+FITEM,2,15  
+FITEM,2,9   
+AL,P51X 
+
+!Top horizontal 
+FLST,2,4,4  
+FITEM,2,11  
+FITEM,2,12  
+FITEM,2,13  
+FITEM,2,14  
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,15  
+FITEM,2,16  
+FITEM,2,17  
+FITEM,2,12  
+AL,P51X 
+
+!Back angled 
+FLST,2,4,4  
+FITEM,2,13  
+FITEM,2,19  
+FITEM,2,21  
+FITEM,2,18  
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,17  
+FITEM,2,20  
+FITEM,2,22  
+FITEM,2,19  
+AL,P51X 
+
+!Front shear web
+FLST,2,4,4  
+FITEM,2,42  
+FITEM,2,30  
+FITEM,2,40  
+FITEM,2,31  
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,40  
+FITEM,2,34  
+FITEM,2,11  
+FITEM,2,32  
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,41  
+FITEM,2,28  
+FITEM,2,39  
+FITEM,2,30  
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,29  
+FITEM,2,15  
+FITEM,2,34  
+FITEM,2,39  
+AL,P51X 
+
+!Back shear web  
+FLST,2,4,4  
+FITEM,2,38  
+FITEM,2,25  
+FITEM,2,36  
+FITEM,2,23  
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,36  
+FITEM,2,33  
+FITEM,2,13  
+FITEM,2,24  
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,37  
+FITEM,2,26  
+FITEM,2,35  
+FITEM,2,25  
+AL,P51X 
+FLST,2,4,4  
+FITEM,2,27  
+FITEM,2,17  
+FITEM,2,33  
+FITEM,2,35  
+AL,P51X 
+
+!Normal reversal (first batch)
+FLST,5,4,5,ORDE,4   
+FITEM,5,3   
+FITEM,5,-4  
+FITEM,5,7   
+FITEM,5,-8  
+CM,_Y,AREA  
+ASEL, , , ,P51X 
+CM,_Y1,AREA 
+CMSEL,S,_Y  
+CMDELE,_Y   
+AREVERSE,_Y1,0  
+CMDELE,_Y1  
+
+!Normal reversal (second batch)
+FLST,5,4,5,ORDE,4   
+FITEM,5,9   
+FITEM,5,-10 
+FITEM,5,13  
+FITEM,5,-14 
+CM,_Y,AREA  
+ASEL, , , ,P51X 
+CM,_Y1,AREA 
+CMSEL,S,_Y  
+CMDELE,_Y    
+AREVERSE,_Y1,0  
+CMDELE,_Y1   
+
+!Mesh first then copy after 
+
+!This function splits all lines for  meshing 
+LESIZE,ALL, , ,div1, ,1, , ,1,    !Note: first number is the line divisions used
+
+
+!Mesh leading edge 
+TYPE,   1   
+MAT,       3
+REAL,   
+ESYS,       0   
+SECNUM,   3  
+FLST,5,4,5,ORDE,2   
+FITEM,5,1   
+FITEM,5,-4  
+CM,_Y,AREA  
+ASEL, , , ,P51X 
+CM,_Y1,AREA 
+CHKMSH,'AREA'   
+CMSEL,S,_Y    
+MSHKEY,1
+AMESH,_Y1   
+MSHKEY,0 
+CMDELE,_Y   
+CMDELE,_Y1  
+CMDELE,_Y2  
+
+!Mesh Shear Cap
+TYPE,   1   
+MAT,       1
+REAL,   
+ESYS,       0   
+SECNUM,   1 
+FLST,5,2,5,ORDE,2   
+FITEM,5,5   
+FITEM,5,-6  
+CM,_Y,AREA  
+ASEL, , , ,P51X 
+CM,_Y1,AREA 
+CHKMSH,'AREA'   
+CMSEL,S,_Y   
+MSHKEY,1
+AMESH,_Y1   
+MSHKEY,0  
+CMDELE,_Y   
+CMDELE,_Y1  
+CMDELE,_Y2  
+
+!Mesh Trailling Edge 
+TYPE,   1   
+MAT,       4
+REAL,   
+ESYS,       0   
+SECNUM,   4  
+FLST,5,2,5,ORDE,2   
+FITEM,5,7   
+FITEM,5,-8  
+CM,_Y,AREA  
+ASEL, , , ,P51X 
+CM,_Y1,AREA 
+CHKMSH,'AREA'   
+CMSEL,S,_Y    
+MSHKEY,1
+AMESH,_Y1   
+MSHKEY,0 
+CMDELE,_Y   
+CMDELE,_Y1  
+CMDELE,_Y2  
+
+!Mesh Shear Webs 
+TYPE,   1   
+MAT,       2
+REAL,   
+ESYS,       0   
+SECNUM,   2  
+FLST,5,8,5,ORDE,2   
+FITEM,5,9   
+FITEM,5,-16 
+CM,_Y,AREA  
+ASEL, , , ,P51X 
+CM,_Y1,AREA 
+CHKMSH,'AREA'   
+CMSEL,S,_Y    
+MSHKEY,1
+AMESH,_Y1   
+MSHKEY,0 
+CMDELE,_Y   
+CMDELE,_Y1  
+CMDELE,_Y2    
+
+
+!Copysing mesh and area 
+FLST,3,16,5,ORDE,2  
+FITEM,3,1   
+FITEM,3,-16 
+AGEN,C2,P51X, , , , ,W2, ,0 
+
+!Reflecting Mesh about X-Z plane 
+FLST,3,16*C2,5,ORDE,2 
+FITEM,3,1   
+FITEM,3,-16*C2
+ARSYM,Y,P51X, , , ,0,0  
+
+
+!Merge overlapping keypoints and nodes 
+NUMMRG,NODE,0.0001, , ,LOW  
+NUMMRG,KP,0.0001, , ,LOW    !Tolerance has to fine enough to capture coincident nodes 
+
+!Increases node numbers by an increment of 1, to avoid issues with undefined nodes in the following step 
+NUMCMP,NODE 
+
+
+LN1=0
+
+!APPLYING LOADING TO BLADE 
+K1=W2/(4*Div1)
+K2=W2*C2
+
+!1/3 load  /////////////////////////// 
+*Do,Z1,K1,K2,K1*2
+
+I1=node(L1,H1,Z1)
+I2=node(L2,H1,Z1)
+f,I1,FY,-FP1*2/3
+f,I2,FY,-FP1*2/3
+
+*enddo 
+
+
+!2/3 load  ///////////////////////////// 
+*Do,Z2,K1*2,(K2-k1*2),K1*2
+
+I1=node(L1,H1,Z2)
+I2=node(L2,H1,Z2)
+f,I1,FY,-FP1*1/3
+f,I2,FY,-FP1*1/3
+
+*enddo
+
+
+!Extremities (1/6 load) /////////////////////
+!Wing Root 
+I1=node(L1,H1,0)
+I2=node(L2,H1,0)
+f,I1,FY,-FP1*1/6
+f,I2,FY,-FP1*1/6
+
+!Wing End 
+I1=node(L1,H1,K2)
+I2=node(L2,H1,K2)
+f,I1,FY,-FP1*1/6
+f,I2,FY,-FP1*1/6
+
+
+
+!Applying fixed contraint to end 
+*get,nmax,node,0,num,max   !obtains highest node title number
+*get,nmin,node,0,num,min   !obtains lowest node title number 
+
+*do,i,nmin,nmax,1
+
+	*get,jz,node,i,loc,z
+
+ 	*if,jz,eq,0,then
+		d,i,all
+	*else
+	*endif
+
+*enddo
+
+!Geometry has been created, meshed, and loads and boundary conditions have been applied 
+/ESHAPE,1
+/REP
+
+/SOL
+
+*if,LD,eq,1,then
+ANTYPE,0
+NLGEOM,1
+*endif
+
+
+!/STATUS,SOLU
+
+SOLVE
+
+/POST1
+
+!Get max y nodal displacement 
+dendv1=0
+
+*do,i,nmin,nmax,1
+
+dendv12=dendv1
+
+	!*get,dendv1,node,i,u,y
+ 	*get,ymax,node,i,u,y
+	*get,xmax,node,i,u,x
+	*get,zmax,node,i,u,z
+
+                dendv1=sqrt((xmax**2)+(ymax**2)+(zmax**2))                  
+   	         
+		*if,dendv1,gt,dendv12,then 
+			dendv1=dendv1
+		*else 
+			dendv1=dendv12
+		*endif
+*enddo
+
+
+!Calculate the mass of the wing 
+cm,ce1,elem
+cm,ce2,elem
+*get,ecnt,elem,,count
+*if,ecnt,eq,0,then
+/out
+*msg,info
+There are NO active elements, No action
+*endif
+/nerr,0,1e5
+*if,ecnt,eq,0,:end
+
+esel,all
+*get,emax,elem,,num,max
+*set,msk
+*dim,msk,,emax
+*set,evol
+*dim,evol,,emax
+*set,evolm
+*dim,evolm,,emax,2
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vabs,1
+*vmask,msk(1)
+*vget,evol(1),elem,1,geom
+
+totmass1=0
+cmsel,,ce1
+*do,_i1,1,ecnt
+*get,emin,elem,,num,min
+*if,emin,eq,0,exit
+*get,cmat,elem,emin,attr,mat
+*get,cdens,dens,cmat,temp,0
+esel,r,mat,,cmat
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vmask,msk(1)
+*voper,evol(1),evol(1),mult,cdens
+*vmask,msk(1)
+*vscfun,cmass,sum,evol(1)
+totmass1=totmass1+cmass
+evolm(cmat,1)=cmass
+evolm(cmat,2)=cdens
+cmsel,,ce1
+esel,u,mat,,cmat
+cm,ce1,elem
+*enddo
+
+LEN=C2*W2
+totmass1=totmass1/LEN    !Finding the weight per unit meter 
+
+!Delete array parameters to avaoid warnging signal 
+*del,msk,,nopr 
+*del,evol,,nopr 
+*del,evolm,,nopr 
+
+
+
+
+!111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+
+
+!Defining maximunmm allowed deflection 
+MaxDef=dendv1*FA    
+W1=W2                !Perforated unit is set equal to non-perforated set
+
+
+
+n=0
+*Do,v1,1,15,1        !Max loops set at 15, once a diameter is found however, the script will exit
+n=n+1 !Updating iteration count 
+
+	*if,v1,eq,1,then 
+	D1=STARTD
+	*else
+		*if,Dopt,eq,D1,then	 !exploratory search was unsuccessful
+			*if,divH,lt,e1,then
+				*EXIT
+			*else 
+                		divH=divH/Ediv        !setting new value for perturbation vector 
+				
+			*endif
+
+                *else	 !exploratory search was successful      
+				
+	
+		!D1T is the pattern move to test the tentative point  
+
+
+
+		D1T=D1+AF*(Dopt-D1)
+
+		*Do,v2,1,3,1
+		/PREP7
+        
+	
+		*if,v2,eq,1,then
+		DA1=D1T+divH 
+		DG=DA1
+		D2=W1/2+DA1/2 !12 and 3 o'clock position on hole
+		D3=W1/2-DA1/2 !6 and 9 o'clock position on hole 
+
+		*elseif,v2,eq,2,then
+		DA2=D1T
+		DG=DA2
+		D2=W1/2+DA2/2 !12 and 3 o'clock position on hole
+		D3=W1/2-DA2/2 !6 and 9 o'clock position on hole 
+
+		*elseif,v2,eq,3,then
+		DA3=D1T-divH
+		DG=DA3
+		D2=W1/2+DA3/2 !12 and 3 o'clock position on hole
+		D3=W1/2-DA3/2 !6 and 9 o'clock position on hole 
+		*endif
+
+		aclear,all
+		edele,all,all
+		ndele,all,all
+		adele,all,all
+		ldele,all,all
+		kdele,all,all
+
+
+		ET,1,SHELL281   
+
+		!Material properties defined in previous section still stand, and do not have to be redefined.
+		!The same applied for the shell elements used 
+
+		!Following section creates unit of blade to be copied 
+
+		!Oultine of turbine blade 
+		K,1,L0,0,0,  
+		K,2,L0,H0,0,   
+		K,3,L1,H1,0,
+		K,4,L2,H1,0,  
+		K,5,L3,0,0, 
+		K,6,L1,0,0,
+		K,7,L2,0,0,
+
+		!Offset profile 
+		K,8,L0,0,W1,  
+		K,9,L0,H0,W1,   
+		K,10,L1,H1,W1,
+		K,11,L2,H1,W1,  
+		K,12,L3,0,W1, 
+		K,13,L1,0,W1,
+		K,14,L2,0,W1,
+	
+		!Points for hole on front shear web
+		K,15,L1,0,W1/2, !Centre of hole on shear web 
+		K,16,L1,0,D2, !3 oclock point
+		K,17,L1,0,D3, !9 oclock point 
+		K,18,L1,DG/2,W1/2, !12 oclock point 
+
+		!Points for hole on back shear web
+		K,20,L2,0,W1/2, !Centre of hole on shear web 
+		K,21,L2,0,D2, !3 oclock point
+		K,22,L2,0,D3, !9 oclock point 
+		K,23,L2,DG/2,W1/2, !12 oclock point 
+
+		!Points to divide area around hole 
+		!First shear web
+		K,24,L1,H1,W1/2  !12 oclcok position 
+	
+		!Second shear web 
+		K,25,L2,H1,W1/2  !12 oclcok position 
+	
+		!All lines created in anti clockwise direction 
+		!Arcs around first holes
+		LARC,16,18,15,DG/2,
+		LARC,18,17,15,DG/2,
+
+		!Arcs around second hole 
+		LARC,23,22,20,DG/2,
+		LARC,21,23,20,DG/2,
+
+		!Divides arcs to improve meshing 
+		FLST,2,4,4,ORDE,2   
+		FITEM,2,1   
+		FITEM,2,-4  
+		LDIV,P51X,0.5, ,2,0 
+
+		!Mid-points to accomodate lines from holes 
+		K,29,L0,0,W1/2,  
+		K,30,L0,H0,W1/2,   
+		K,31,L3,0,W1/2, 
+
+		!Lines from shear web hole
+		!First Hole 
+		LSTR,       19,      10   !1.5 oclock   
+		LSTR,       18,      24   !12 oclock 
+		LSTR,       26,      3    !10.5 oclock
+		LSTR,       16,      13   !3 oclock 
+		LSTR,       17,      6    !9 oclock
+		!Second Hole   
+		LSTR,       28,      11   !1.5 oclock   
+		LSTR,       23,      25   !12 oclock 
+		LSTR,       27,      4    !10.5 oclock
+		LSTR,       21,      14   !3 oclock 
+		LSTR,       22,      7    !9 oclock
+
+		!Lines to create front vertical panel 
+		LSTR,       1,       29  
+		LSTR,       29,      30  
+		LSTR,       30,      2  
+		LSTR,       2,       1
+		LSTR,       29,      8  
+		LSTR,       8,       9 
+		LSTR,       9,       30
+
+		!Lines to create front angled panel  
+		LSTR,       30,      24 
+		LSTR,       3,       2
+		LSTR,       9,       10 
+
+		!Line to create top horizontal panel 
+		LSTR,       3,       24  
+		LSTR,       24,      25  
+		LSTR,       25,      4  
+		LSTR,       4,       3
+		LSTR,       24,      10  
+		LSTR,       10,      11  
+		LSTR,       11,      25
+
+		!Line to create angles rear panel 
+		LSTR,       4,       5 
+		LSTR,       5,       31 
+		LSTR,       31,      25
+		LSTR,       31,      12 
+		LSTR,       11,      12  
+
+		!Line completing shear webs 
+		LSTR,      14,      11  
+		LSTR,      7,       4 
+		LSTR,      13,      10 
+		LSTR,      6,       3 
+
+
+		!Area - front vertical panel 
+		FLST,2,4,4  
+		FITEM,2,19  
+		FITEM,2,20  
+		FITEM,2,21  
+		FITEM,2,22  
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,23  
+		FITEM,2,24  
+		FITEM,2,25  
+		FITEM,2,20  
+		AL,P51X 
+
+		!Area - angled front panel 
+		FLST,2,4,4  
+		FITEM,2,21  
+		FITEM,2,26  
+		FITEM,2,29  
+		FITEM,2,27  
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,25  
+		FITEM,2,28  
+		FITEM,2,33  
+		FITEM,2,26  
+		AL,P51X 
+
+		!Area - Top horizontal 
+		FLST,2,4,4  
+		FITEM,2,29  
+		FITEM,2,30  
+		FITEM,2,31  
+		FITEM,2,32  
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,33  
+		FITEM,2,34  
+		FITEM,2,35  
+		FITEM,2,30  
+		AL,P51X 
+
+		!Area - Back angled panel 
+		FLST,2,4,4  
+		FITEM,2,31  
+		FITEM,2,38  
+		FITEM,2,37  
+		FITEM,2,36  
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,35  
+		FITEM,2,40  
+		FITEM,2,39  
+		FITEM,2,38  
+		AL,P51X 
+
+
+		!Area - Back shear web 
+		FLST,2,4,4  
+		FITEM,2,17  
+		FITEM,2,41  
+		FITEM,2,14  
+		FITEM,2,4   
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,14  
+		FITEM,2,35  
+		FITEM,2,15  
+		FITEM,2,8   
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,15  
+		FITEM,2,31  
+		FITEM,2,16  
+		FITEM,2,3   
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,16  
+		FITEM,2,42  
+		FITEM,2,18  
+		FITEM,2,7   
+		AL,P51X 
+
+		!Area - Fornt shear web
+		FLST,2,4,4  
+		FITEM,2,12  
+		FITEM,2,43  
+		FITEM,2,9   
+		FITEM,2,1   
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,9   
+		FITEM,2,33  
+		FITEM,2,10  
+		FITEM,2,5   
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,2   
+		FITEM,2,10  
+		FITEM,2,29  
+		FITEM,2,11  
+		AL,P51X 
+		FLST,2,4,4  
+		FITEM,2,11  
+		FITEM,2,44  
+		FITEM,2,13  
+		FITEM,2,6   
+		AL,P51X 
+
+
+
+		!Normal reversal 
+		!First batch
+		FLST,5,4,5,ORDE,4   
+		FITEM,5,3   
+		FITEM,5,-4  
+		FITEM,5,7   
+		FITEM,5,-8  
+		CM,_Y,AREA  
+		ASEL, , , ,P51X 
+		CM,_Y1,AREA 
+		CMSEL,S,_Y  
+		CMDELE,_Y     
+		AREVERSE,_Y1,0  
+		CMDELE,_Y1  
+
+
+		!Second batch 
+		CM,_Y,AREA  
+		ASEL, , , ,      15 
+		CM,_Y1,AREA 
+		CMSEL,S,_Y  
+		CMDELE,_Y     
+		AREVERSE,_Y1,0  
+		CMDELE,_Y1  
+
+		!This function splits all lines for  meshing 
+		LESIZE,ALL, , ,div, ,1, , ,1,    !Note: first number is the line divisions used
+
+		!Mesh before copying 
+		!Mesh leading Edge 
+		TYPE,   1   
+		MAT,       3
+		REAL,   
+		ESYS,       0   
+		SECNUM,   3   
+		FLST,5,4,5,ORDE,2   
+		FITEM,5,1   
+		FITEM,5,-4  
+		CM,_Y,AREA  
+		ASEL, , , ,P51X 
+		CM,_Y1,AREA 
+		CHKMSH,'AREA'   
+		CMSEL,S,_Y    
+		MSHKEY,1
+		AMESH,_Y1   
+		MSHKEY,0
+		CMDELE,_Y   
+		CMDELE,_Y1  
+		CMDELE,_Y2  
+
+		!Mesh Shear Caps 
+		TYPE,   1   
+		MAT,       1
+		REAL,   
+		ESYS,       0   
+		SECNUM,   1  
+		FLST,5,2,5,ORDE,2   
+		FITEM,5,5   
+		FITEM,5,-6  
+		CM,_Y,AREA  
+		ASEL, , , ,P51X 
+		CM,_Y1,AREA 
+		CHKMSH,'AREA'   
+		CMSEL,S,_Y   
+		MSHKEY,1
+		AMESH,_Y1   
+		MSHKEY,0  
+		CMDELE,_Y   
+		CMDELE,_Y1  
+		CMDELE,_Y2  
+
+
+		!Mesh Trailling Edge 
+		TYPE,   1   
+		MAT,       4
+		REAL,   
+		ESYS,       0   
+		SECNUM,   4  
+		FLST,5,2,5,ORDE,2   
+		FITEM,5,7   
+		FITEM,5,-8  
+		CM,_Y,AREA  
+		ASEL, , , ,P51X 
+		CM,_Y1,AREA 
+		CHKMSH,'AREA'   
+		CMSEL,S,_Y    
+		MSHKEY,1
+		AMESH,_Y1   
+		MSHKEY,0  
+		CMDELE,_Y   
+		CMDELE,_Y1  
+		CMDELE,_Y2   
+
+
+		!Mesh Shear Webs 
+		TYPE,   1   
+		MAT,       2
+		REAL,   
+		ESYS,       0   
+		SECNUM,   2 
+		FLST,5,8,5,ORDE,2   
+		FITEM,5,9   
+		FITEM,5,-16 
+		CM,_Y,AREA  
+		ASEL, , , ,P51X 
+		CM,_Y1,AREA 
+		CHKMSH,'AREA'   
+		CMSEL,S,_Y   
+		MSHKEY,1
+		AMESH,_Y1   
+		MSHKEY,0 
+		CMDELE,_Y   
+		CMDELE,_Y1  
+		CMDELE,_Y2  
+
+
+		!Copying mesh 
+		FLST,3,16,5,ORDE,2  
+		FITEM,3,1   
+		FITEM,3,-16 
+		AGEN,C1,P51X, , , , ,W1, ,0 
+
+
+		!Reflecting Mesh
+		FLST,3,16*C1,5,ORDE,2 
+		FITEM,3,1   
+		FITEM,3,-16*C1
+		ARSYM,Y,P51X, , , ,0,0  
+
+		!Merge overlapping keypoints and nodes 
+		NUMMRG,NODE,0.0001, , ,LOW  
+		NUMMRG,KP,0.0001, , ,LOW    !Tolerance has to fine enough to capture coincident nodes 
+
+		!Increases node numbers by an increment of 1, to avoid issues with undefined nodes in the following step 
+		NUMCMP,NODE 
+
+		!Fix wing root at all nodes in all dof 
+		*get,nmax,node,0,num,max   !obtains highest node title number
+		*get,nmin,node,0,num,min   !obtains lowest node title number 
+
+		*do,i,nmin,nmax,1
+
+			*get,jz,node,i,loc,z
+
+ 			*if,jz,eq,0,then
+				d,i,all
+			*else
+			*endif
+
+		*enddo
+
+		LN2=0
+
+	        !APPLYING LOADING TO BLADE 
+		K1=W1/(4*Div)
+		K2=W1*C1
+
+		!Apply loading
+		!1/3 load  /////////////////////////// 
+		*Do,Z1,K1,K2,K1*2
+
+		I1=node(L1,H1,Z1)
+		I2=node(L2,H1,Z1)
+		f,I1,FY,-FP2*2/3
+		f,I2,FY,-FP2*2/3
+	
+		*enddo 
+
+
+		!2/3 load  ///////////////////////////// 
+		*Do,Z2,K1*2,(K2-k1*2),K1*2
+
+		I1=node(L1,H1,Z2)
+		I2=node(L2,H1,Z2)
+		f,I1,FY,-FP2*1/3
+		f,I2,FY,-FP2*1/3
+
+		*enddo
+
+
+		!Extremities (1/6 load) /////////////////////
+		!Wing Root 
+		I1=node(L1,H1,0)
+		I2=node(L2,H1,0)
+		f,I1,FY,-FP2*1/6
+		f,I2,FY,-FP2*1/6
+
+		!Wind End 
+		I1=node(L1,H1,K2)
+		I2=node(L2,H1,K2)
+		f,I1,FY,-FP2*1/6
+		f,I2,FY,-FP2*1/6
+
+		!Get lenght of the airfoil LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
+		LEN=C1*W1
+
+
+
+/SOL
+
+*if,LD,eq,1,then
+ANTYPE,0
+NLGEOM,1
+*endif
+
+
+!/STATUS,SOLU
+
+SOLVE
+
+/POST1
+
+
+	!Get max y nodal displacement for each hole
+
+	dendv2=0
+
+	*do,i,nmin,nmax,1
+	
+	*if,v2,eq,1,then
+	dendv22a=dendv2
+	*elseif,v2,eq,2,then
+	dendv22b=dendv2
+	*else
+	dendv22c=dendv2
+	*endif 
+
+		!*get,dendv2,node,i,u,y
+  		*get,ymax1,node,i,u,y
+		*get,xmax1,node,i,u,x
+		*get,zmax1,node,i,u,z
+
+                 dendv2=sqrt((xmax1**2)+(ymax1**2)+(zmax1**2))     
+			
+		 *if,v2,eq,1,then
+			*if,dendv2,gt,dendv22a,then 
+				dendv2=dendv2
+			*else 
+				dendv2=dendv22a
+			*endif
+
+		 *elseif,v2,eq,2,then
+			*if,dendv2,gt,dendv22b,then 
+				dendv2=dendv2
+			*else 
+				dendv2=dendv22b
+			*endif
+
+		 *else
+			*if,dendv2,gt,dendv22c,then 
+				dendv2=dendv2
+			*else 
+				dendv2=dendv22c
+			*endif
+		 *endif 
+
+	*enddo
+
+!CHECK MASS 
+
+*if,v2,eq,1,then
+cm,ce1,elem
+cm,ce2,elem
+*get,ecnt,elem,,count
+*if,ecnt,eq,0,then
+/out
+*msg,info
+There are NO active elements, No action
+*endif
+/nerr,0,1e5
+*if,ecnt,eq,0,:end
+
+esel,all
+*get,emax,elem,,num,max
+*set,msk
+*dim,msk,,emax
+*set,evol
+*dim,evol,,emax
+*set,evolm
+*dim,evolm,,emax,2
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vabs,1
+*vmask,msk(1)
+*vget,evol(1),elem,1,geom
+
+totmass2c=0
+cmsel,,ce1
+*do,_i1,1,ecnt
+*get,emin,elem,,num,min
+*if,emin,eq,0,exit
+*get,cmat,elem,emin,attr,mat
+*get,cdens,dens,cmat,temp,0
+esel,r,mat,,cmat
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vmask,msk(1)
+*voper,evol(1),evol(1),mult,cdens
+*vmask,msk(1)
+*vscfun,cmass,sum,evol(1)
+totmass2c=totmass2c+cmass
+evolm(cmat,1)=cmass
+evolm(cmat,2)=cdens
+
+cmsel,,ce1
+esel,u,mat,,cmat
+cm,ce1,elem
+*enddo
+
+LENA=C1*W1
+totmass2c=totmass2c/LENA    !Finding the weight per unit meter 
+
+
+*else
+*endif
+
+
+
+
+
+
+*if,v2,eq,2,then
+cm,ce1,elem
+cm,ce2,elem
+*get,ecnt,elem,,count
+*if,ecnt,eq,0,then
+/out
+*msg,info
+There are NO active elements, No action
+*endif
+/nerr,0,1e5
+*if,ecnt,eq,0,:end
+
+esel,all
+*get,emax,elem,,num,max
+*set,msk
+*dim,msk,,emax
+*set,evol
+*dim,evol,,emax
+*set,evolm
+*dim,evolm,,emax,2
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vabs,1
+*vmask,msk(1)
+*vget,evol(1),elem,1,geom
+
+totmass3c=0
+cmsel,,ce1
+*do,_i1,1,ecnt
+*get,emin,elem,,num,min
+*if,emin,eq,0,exit
+*get,cmat,elem,emin,attr,mat
+*get,cdens,dens,cmat,temp,0
+esel,r,mat,,cmat
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vmask,msk(1)
+*voper,evol(1),evol(1),mult,cdens
+*vmask,msk(1)
+*vscfun,cmass,sum,evol(1)
+totmass3c=totmass3c+cmass
+evolm(cmat,1)=cmass
+evolm(cmat,2)=cdens
+
+cmsel,,ce1
+esel,u,mat,,cmat
+cm,ce1,elem
+*enddo
+
+LENB=C1*W1
+totmass3c=totmass3c/LENB    !Finding the weight per unit meter 
+
+*else
+*endif
+
+
+
+*if,v2,eq,3,then
+cm,ce1,elem
+cm,ce2,elem
+*get,ecnt,elem,,count
+*if,ecnt,eq,0,then
+/out
+*msg,info
+There are NO active elements, No action
+*endif
+/nerr,0,1e5
+*if,ecnt,eq,0,:end
+
+esel,all
+*get,emax,elem,,num,max
+*set,msk
+*dim,msk,,emax
+*set,evol
+*dim,evol,,emax
+*set,evolm
+*dim,evolm,,emax,2
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vabs,1
+*vmask,msk(1)
+*vget,evol(1),elem,1,geom
+
+totmass4c=0
+cmsel,,ce1
+*do,_i1,1,ecnt
+*get,emin,elem,,num,min
+*if,emin,eq,0,exit
+*get,cmat,elem,emin,attr,mat
+*get,cdens,dens,cmat,temp,0
+esel,r,mat,,cmat
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vmask,msk(1)
+*voper,evol(1),evol(1),mult,cdens
+*vmask,msk(1)
+*vscfun,cmass,sum,evol(1)
+totmass4c=totmass4c+cmass
+evolm(cmat,1)=cmass
+evolm(cmat,2)=cdens
+!*stat,evolm,114,115
+cmsel,,ce1
+esel,u,mat,,cmat
+cm,ce1,elem
+*enddo
+
+LENC=C1*W1
+totmass4c=totmass4c/LENC    !Finding the weight per unit meter 
+
+*else
+*endif
+
+		!Delete array parameters to avoid warning signal 
+		*del,msk,,nopr 
+		*del,evol,,nopr 
+		*del,evolm,,nopr 
+
+		*enddo 		!enddo for hole exploratory steps 
+
+
+
+		!IMPORTANT: The following section differs from the main code in that all holes muyst be checked for breaches, since it is 
+		!no a given that they abide to the contraints
+
+
+		!Check vertical L.E. and displacement conditions
+
+!Hole 1 
+
+		!First, check hole does not breach LE contraint in y-axis (vertical ligament efficiency)
+		*if,DA1,gt,MaxDiam,then
+		totmass2c = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+        	!Check for diaplacment breaches
+		*if,dendv22a,gt,MaxDef,then
+		totmass2c = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+		!Check for horizontal ligamnet efficiency
+		HF1=DA1*HF
+		*if,W2,lt,HF1,then
+		totmass2c = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+!Hole 2 
+
+		!First, check hole does not breach LE contraint in y-axis (vertical ligament efficiency)
+		*if,DA2,gt,MaxDiam,then
+		totmass3c = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+        	!Check for diaplacment breaches
+		*if,dendv22b,gt,MaxDef,then
+		totmass3c = 1.1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+		!Check for horizontal ligamnet efficiency
+		HF2=DA2*HF
+		*if,W2,lt,HF2,then
+		totmass3c = 1.1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+!Hole 3 
+
+		!First, check hole does not breach LE contraint in y-axis (vertical ligament efficiency)
+		*if,DA3,gt,MaxDiam,then
+		totmass4c = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+        	!Check for diaplacment breaches
+		*if,dendv22c,gt,MaxDef,then
+		totmass4c = 1.2e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+		!Check for horizontal ligamnet efficiency
+		HF3=DA3*HF
+		*if,W2,lt,HF3,then
+		totmass4c = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+		*else
+		*endif
+
+
+	
+		!Once the three diameters have been trialled,  the following section finds the optimal one 
+		
+		!Selection of diameter which minimises blade mass whilst abiding to the imposed constraints 
+		*if,totmass2c,lt,totmass3c,and,totmass2c,lt,totmass4c,then
+		Dopt1=DA1
+		totmasspost = totmass2c
+		*elseif,totmass3c,lt,totmass4c,and,totmass3c,lt,totmass2c,then
+		Dopt1=DA2
+		totmasspost = totmass3c
+		*else
+		Dopt1=DA3
+		totmasspost = totmass4c
+		*endif
+
+
+
+
+
+
+			*If,totmasspost,lt,totmasspre,then
+				!If one of the exploratory steps using D1T produced a more optimal desing, it is selected
+            			D1=Dopt1  
+			*else
+				!D1 is left as the diameter and perturbation vector is reduced 
+ 	             		divH=divH/Ediv 
+				D1=Dopt   
+			*endif 
+		*endif  
+	*endif
+
+
+
+
+
+!////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+
+
+
+	*Do,v2,1,3,1
+	/PREP7
+        
+
+	*if,v2,eq,1,then
+	DA1=D1+divH 
+	DG=DA1	
+	D2=W1/2+DA1/2 !12 and 3 o'clock position on hole
+	D3=W1/2-DA1/2 !6 and 9 o'clock position on hole 
+
+	*elseif,v2,eq,2,then
+	DA2=D1
+	DG=DA2
+	D2=W1/2+DA2/2 !12 and 3 o'clock position on hole
+	D3=W1/2-DA2/2 !6 and 9 o'clock position on hole 
+
+	*elseif,v2,eq,3,then
+	DA3=D1-divH
+	DG=DA3
+	D2=W1/2+DA3/2 !12 and 3 o'clock position on hole
+	D3=W1/2-DA3/2 !6 and 9 o'clock position on hole 
+	*endif
+
+	aclear,all
+	edele,all,all
+	ndele,all,all
+	adele,all,all
+	ldele,all,all
+	kdele,all,all
+
+
+	ET,1,SHELL281   
+
+	!Material properties defined in previous section still stand, and do not have to be redefined.
+	!The same applied for the shell elements used 
+
+	!Following section creates unit of blade to be copied 
+
+	!Oultine of turbine blade 
+	K,1,L0,0,0,  
+	K,2,L0,H0,0,   
+	K,3,L1,H1,0,
+	K,4,L2,H1,0,  
+	K,5,L3,0,0, 
+	K,6,L1,0,0,
+	K,7,L2,0,0,
+
+	!Offset profile 
+	K,8,L0,0,W1,  
+	K,9,L0,H0,W1,   
+	K,10,L1,H1,W1,
+	K,11,L2,H1,W1,  
+	K,12,L3,0,W1, 
+	K,13,L1,0,W1,
+	K,14,L2,0,W1,
+
+	!Points for hole on front shear web
+	K,15,L1,0,W1/2, !Centre of hole on shear web 
+	K,16,L1,0,D2, !3 oclock point
+	K,17,L1,0,D3, !9 oclock point 
+	K,18,L1,DG/2,W1/2, !12 oclock point 
+
+	!Points for hole on back shear web
+	K,20,L2,0,W1/2, !Centre of hole on shear web 
+	K,21,L2,0,D2, !3 oclock point
+	K,22,L2,0,D3, !9 oclock point 
+	K,23,L2,DG/2,W1/2, !12 oclock point 
+
+	!Points to divide area around hole 
+	!First shear web
+	K,24,L1,H1,W1/2  !12 oclcok position 
+	
+	!Second shear web 
+	K,25,L2,H1,W1/2  !12 oclcok position 
+
+	!All lines created in anti clockwise direction 
+	!Arcs around first holes
+	LARC,16,18,15,DG/2,
+	LARC,18,17,15,DG/2,
+
+	!Arcs around second hole 
+	LARC,23,22,20,DG/2,
+	LARC,21,23,20,DG/2,
+
+	!Divides arcs to improve meshing 
+	FLST,2,4,4,ORDE,2   
+	FITEM,2,1   
+	FITEM,2,-4  
+	LDIV,P51X,0.5, ,2,0 
+
+	!Mid-points to accomodate lines from holes 
+	K,29,L0,0,W1/2,  
+	K,30,L0,H0,W1/2,   
+	K,31,L3,0,W1/2, 
+
+	!Lines from shear web hole
+	!First Hole 
+	LSTR,       19,      10   !1.5 oclock   
+	LSTR,       18,      24   !12 oclock 
+	LSTR,       26,      3    !10.5 oclock
+	LSTR,       16,      13   !3 oclock 
+	LSTR,       17,      6    !9 oclock
+	!Second Hole   
+	LSTR,       28,      11   !1.5 oclock   
+	LSTR,       23,      25   !12 oclock 
+	LSTR,       27,      4    !10.5 oclock
+	LSTR,       21,      14   !3 oclock 
+	LSTR,       22,      7    !9 oclock
+
+	!Lines to create front vertical panel 
+	LSTR,       1,       29  
+	LSTR,       29,      30  
+	LSTR,       30,      2  
+	LSTR,       2,       1
+	LSTR,       29,      8  
+	LSTR,       8,       9 
+	LSTR,       9,       30
+
+	!Lines to create front angled panel  
+	LSTR,       30,      24 
+	LSTR,       3,       2
+	LSTR,       9,       10 
+
+	!Line to create top horizontal panel 
+	LSTR,       3,       24  
+	LSTR,       24,      25  
+	LSTR,       25,      4  
+	LSTR,       4,       3
+	LSTR,       24,      10  
+	LSTR,       10,      11  
+	LSTR,       11,      25
+
+	!Line to create angles rear panel 
+	LSTR,       4,       5 
+	LSTR,       5,       31 
+	LSTR,       31,      25
+	LSTR,       31,      12 
+	LSTR,       11,      12  
+
+	!Line completing shear webs 
+	LSTR,      14,      11  
+	LSTR,      7,       4 
+	LSTR,      13,      10 
+	LSTR,      6,       3 
+
+
+	!Area - front vertical panel 
+	FLST,2,4,4  
+	FITEM,2,19  
+	FITEM,2,20  
+	FITEM,2,21  
+	FITEM,2,22  
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,23  
+	FITEM,2,24  
+	FITEM,2,25  
+	FITEM,2,20  
+	AL,P51X 
+
+	!Area - angled front panel 
+	FLST,2,4,4  
+	FITEM,2,21  
+	FITEM,2,26  
+	FITEM,2,29  
+	FITEM,2,27  
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,25  
+	FITEM,2,28  
+	FITEM,2,33  
+	FITEM,2,26  
+	AL,P51X 
+
+	!Area - Top horizontal 
+	FLST,2,4,4  
+	FITEM,2,29  
+	FITEM,2,30  
+	FITEM,2,31  
+	FITEM,2,32  
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,33  
+	FITEM,2,34  
+	FITEM,2,35  
+	FITEM,2,30  
+	AL,P51X 
+
+	!Area - Back angled panel 
+	FLST,2,4,4  
+	FITEM,2,31  
+	FITEM,2,38  
+	FITEM,2,37  
+	FITEM,2,36  
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,35  
+	FITEM,2,40  
+	FITEM,2,39  
+	FITEM,2,38  
+	AL,P51X 
+
+
+	!Area - Back shear web 
+	FLST,2,4,4  
+	FITEM,2,17  
+	FITEM,2,41  
+	FITEM,2,14  
+	FITEM,2,4   
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,14  
+	FITEM,2,35  
+	FITEM,2,15  
+	FITEM,2,8   
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,15  
+	FITEM,2,31  
+	FITEM,2,16  
+	FITEM,2,3   
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,16  
+	FITEM,2,42  
+	FITEM,2,18  
+	FITEM,2,7   
+	AL,P51X 
+
+	!Area - Fornt shear web
+	FLST,2,4,4  
+	FITEM,2,12  
+	FITEM,2,43  
+	FITEM,2,9   
+	FITEM,2,1   
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,9   
+	FITEM,2,33  
+	FITEM,2,10  
+	FITEM,2,5   
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,2   
+	FITEM,2,10  
+	FITEM,2,29  
+	FITEM,2,11  
+	AL,P51X 
+	FLST,2,4,4  
+	FITEM,2,11  
+	FITEM,2,44  
+	FITEM,2,13  
+	FITEM,2,6   
+	AL,P51X 
+
+
+
+	!Normal reversal 
+	!First batch
+	FLST,5,4,5,ORDE,4   
+	FITEM,5,3   
+	FITEM,5,-4  
+	FITEM,5,7   
+	FITEM,5,-8  
+	CM,_Y,AREA  
+	ASEL, , , ,P51X 
+	CM,_Y1,AREA 
+	CMSEL,S,_Y  
+	CMDELE,_Y     
+	AREVERSE,_Y1,0  
+	CMDELE,_Y1  
+
+
+	!Second batch 
+	CM,_Y,AREA  
+	ASEL, , , ,      15 
+	CM,_Y1,AREA 
+	CMSEL,S,_Y  
+	CMDELE,_Y     
+	AREVERSE,_Y1,0  
+	CMDELE,_Y1  
+
+	!This function splits all lines for  meshing 
+	LESIZE,ALL, , ,div, ,1, , ,1,    !Note: first number is the line divisions used
+
+	!Mesh before copying 
+	!Mesh leading Edge 
+	TYPE,   1   
+	MAT,       3
+	REAL,   
+	ESYS,       0   
+	SECNUM,   3   
+	FLST,5,4,5,ORDE,2   
+	FITEM,5,1   
+	FITEM,5,-4  
+	CM,_Y,AREA  
+	ASEL, , , ,P51X 
+	CM,_Y1,AREA 
+	CHKMSH,'AREA'   
+	CMSEL,S,_Y    
+	MSHKEY,1
+	AMESH,_Y1   
+	MSHKEY,0
+	CMDELE,_Y   
+	CMDELE,_Y1  
+	CMDELE,_Y2  
+
+	!Mesh Shear Caps 
+	TYPE,   1   
+	MAT,       1
+	REAL,   
+	ESYS,       0   
+	SECNUM,   1  
+	FLST,5,2,5,ORDE,2   
+	FITEM,5,5   
+	FITEM,5,-6  
+	CM,_Y,AREA  
+	ASEL, , , ,P51X 
+	CM,_Y1,AREA 
+	CHKMSH,'AREA'   
+	CMSEL,S,_Y   
+	MSHKEY,1
+	AMESH,_Y1   
+	MSHKEY,0  
+	CMDELE,_Y   
+	CMDELE,_Y1  
+	CMDELE,_Y2  
+
+
+	!Mesh Trailling Edge 
+	TYPE,   1   
+	MAT,       4
+	REAL,   
+	ESYS,       0   
+	SECNUM,   4  
+	FLST,5,2,5,ORDE,2   
+	FITEM,5,7   
+	FITEM,5,-8  
+	CM,_Y,AREA  
+	ASEL, , , ,P51X 
+	CM,_Y1,AREA 
+	CHKMSH,'AREA'   
+	CMSEL,S,_Y    
+	MSHKEY,1
+	AMESH,_Y1   
+	MSHKEY,0  
+	CMDELE,_Y   
+	CMDELE,_Y1  
+	CMDELE,_Y2   
+
+
+	!Mesh Shear Webs 
+	TYPE,   1   
+	MAT,       2
+	REAL,   
+	ESYS,       0   
+	SECNUM,   2 
+	FLST,5,8,5,ORDE,2   
+	FITEM,5,9   
+	FITEM,5,-16 
+	CM,_Y,AREA  
+	ASEL, , , ,P51X 
+	CM,_Y1,AREA 
+	CHKMSH,'AREA'   
+	CMSEL,S,_Y   
+	MSHKEY,1
+	AMESH,_Y1   
+	MSHKEY,0 
+	CMDELE,_Y   
+	CMDELE,_Y1  
+	CMDELE,_Y2  
+
+
+	!Copying mesh 
+	FLST,3,16,5,ORDE,2  
+	FITEM,3,1   
+	FITEM,3,-16 
+	AGEN,C1,P51X, , , , ,W1, ,0 
+
+
+	!Reflecting Mesh
+	FLST,3,16*C1,5,ORDE,2 
+	FITEM,3,1   
+	FITEM,3,-16*C1
+	ARSYM,Y,P51X, , , ,0,0  
+
+	!Merge overlapping keypoints and nodes 
+	NUMMRG,NODE,0.0001, , ,LOW  
+	NUMMRG,KP,0.0001, , ,LOW    !Tolerance has to fine enough to capture coincident nodes 
+
+	!Increases node numbers by an increment of 1, to avoid issues with undefined nodes in the following step 
+	NUMCMP,NODE 
+
+	!Fix wing root at all nodes in all dof 
+	*get,nmax,node,0,num,max   !obtains highest node title number
+	*get,nmin,node,0,num,min   !obtains lowest node title number 
+
+	*do,i,nmin,nmax,1
+
+		*get,jz,node,i,loc,z
+
+ 		*if,jz,eq,0,then
+			d,i,all
+		*else
+		*endif
+
+	*enddo
+
+	LN2=0
+
+        !APPLYING LOADING TO BLADE 
+	K1=W1/(4*Div)
+	K2=W1*C1
+
+	!Apply loading
+	!1/3 load  /////////////////////////// 
+	*Do,Z1,K1,K2,K1*2
+
+	I1=node(L1,H1,Z1)
+	I2=node(L2,H1,Z1)
+	f,I1,FY,-FP2*2/3
+	f,I2,FY,-FP2*2/3
+
+	*enddo 
+
+
+	!2/3 load  ///////////////////////////// 
+	*Do,Z2,K1*2,(K2-k1*2),K1*2
+
+	I1=node(L1,H1,Z2)
+	I2=node(L2,H1,Z2)
+	f,I1,FY,-FP2*1/3
+	f,I2,FY,-FP2*1/3
+
+	*enddo
+
+
+	!Extremities (1/6 load) /////////////////////
+	!Wing Root 
+	I1=node(L1,H1,0)
+	I2=node(L2,H1,0)
+	f,I1,FY,-FP2*1/6
+	f,I2,FY,-FP2*1/6
+
+	!Wind End 
+	I1=node(L1,H1,K2)
+	I2=node(L2,H1,K2)
+	f,I1,FY,-FP2*1/6
+	f,I2,FY,-FP2*1/6
+
+	!Get lenght of the airfoil LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
+	LEN=C1*W1
+
+
+
+/SOL
+
+*if,LD,eq,1,then
+ANTYPE,0
+NLGEOM,1
+*endif
+
+
+!/STATUS,SOLU
+
+SOLVE
+
+/POST1
+
+
+	!Get max y nodal displacement for each hole
+
+	dendv2=0
+
+	*do,i,nmin,nmax,1
+	
+	*if,v2,eq,1,then
+	dendv22a=dendv2
+	*elseif,v2,eq,2,then
+	dendv22b=dendv2
+	*else
+	dendv22c=dendv2
+	*endif 
+
+		!*get,dendv2,node,i,u,y
+  		*get,ymax1,node,i,u,y
+		*get,xmax1,node,i,u,x
+		*get,zmax1,node,i,u,z
+
+                 dendv2=sqrt((xmax1**2)+(ymax1**2)+(zmax1**2))     
+			
+		 *if,v2,eq,1,then
+			*if,dendv2,gt,dendv22a,then 
+				dendv2=dendv2
+			*else 
+				dendv2=dendv22a
+			*endif
+
+		 *elseif,v2,eq,2,then
+			*if,dendv2,gt,dendv22b,then 
+				dendv2=dendv2
+			*else 
+				dendv2=dendv22b
+			*endif
+
+		 *else
+			*if,dendv2,gt,dendv22c,then 
+				dendv2=dendv2
+			*else 
+				dendv2=dendv22c
+			*endif
+		 *endif 
+
+	*enddo
+
+!CHECK MASS 
+
+*if,v2,eq,1,then
+cm,ce1,elem
+cm,ce2,elem
+*get,ecnt,elem,,count
+*if,ecnt,eq,0,then
+/out
+*msg,info
+There are NO active elements, No action
+*endif
+/nerr,0,1e5
+*if,ecnt,eq,0,:end
+
+esel,all
+*get,emax,elem,,num,max
+*set,msk
+*dim,msk,,emax
+*set,evol
+*dim,evol,,emax
+*set,evolm
+*dim,evolm,,emax,2
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vabs,1
+*vmask,msk(1)
+*vget,evol(1),elem,1,geom
+
+totmass2=0
+cmsel,,ce1
+*do,_i1,1,ecnt
+*get,emin,elem,,num,min
+*if,emin,eq,0,exit
+*get,cmat,elem,emin,attr,mat
+*get,cdens,dens,cmat,temp,0
+esel,r,mat,,cmat
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vmask,msk(1)
+*voper,evol(1),evol(1),mult,cdens
+*vmask,msk(1)
+*vscfun,cmass,sum,evol(1)
+totmass2=totmass2+cmass
+evolm(cmat,1)=cmass
+evolm(cmat,2)=cdens
+
+cmsel,,ce1
+esel,u,mat,,cmat
+cm,ce1,elem
+*enddo
+
+LENA=C1*W1
+totmass2=totmass2/LENA    !Finding the weight per unit meter 
+
+
+*else
+*endif
+
+
+
+
+
+
+*if,v2,eq,2,then
+cm,ce1,elem
+cm,ce2,elem
+*get,ecnt,elem,,count
+*if,ecnt,eq,0,then
+/out
+*msg,info
+There are NO active elements, No action
+*endif
+/nerr,0,1e5
+*if,ecnt,eq,0,:end
+
+esel,all
+*get,emax,elem,,num,max
+*set,msk
+*dim,msk,,emax
+*set,evol
+*dim,evol,,emax
+*set,evolm
+*dim,evolm,,emax,2
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vabs,1
+*vmask,msk(1)
+*vget,evol(1),elem,1,geom
+
+totmass3=0
+cmsel,,ce1
+*do,_i1,1,ecnt
+*get,emin,elem,,num,min
+*if,emin,eq,0,exit
+*get,cmat,elem,emin,attr,mat
+*get,cdens,dens,cmat,temp,0
+esel,r,mat,,cmat
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vmask,msk(1)
+*voper,evol(1),evol(1),mult,cdens
+*vmask,msk(1)
+*vscfun,cmass,sum,evol(1)
+totmass3=totmass3+cmass
+evolm(cmat,1)=cmass
+evolm(cmat,2)=cdens
+
+cmsel,,ce1
+esel,u,mat,,cmat
+cm,ce1,elem
+*enddo
+
+LENB=C1*W1
+totmass3=totmass3/LENB    !Finding the weight per unit meter 
+
+*else
+*endif
+
+
+
+*if,v2,eq,3,then
+cm,ce1,elem
+cm,ce2,elem
+*get,ecnt,elem,,count
+*if,ecnt,eq,0,then
+/out
+*msg,info
+There are NO active elements, No action
+*endif
+/nerr,0,1e5
+*if,ecnt,eq,0,:end
+
+esel,all
+*get,emax,elem,,num,max
+*set,msk
+*dim,msk,,emax
+*set,evol
+*dim,evol,,emax
+*set,evolm
+*dim,evolm,,emax,2
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vabs,1
+*vmask,msk(1)
+*vget,evol(1),elem,1,geom
+
+totmass4=0
+cmsel,,ce1
+*do,_i1,1,ecnt
+*get,emin,elem,,num,min
+*if,emin,eq,0,exit
+*get,cmat,elem,emin,attr,mat
+*get,cdens,dens,cmat,temp,0
+esel,r,mat,,cmat
+*vget,msk(1),elem,1,esel
+*voper,msk(1),msk(1),gt,0
+*vmask,msk(1)
+*voper,evol(1),evol(1),mult,cdens
+*vmask,msk(1)
+*vscfun,cmass,sum,evol(1)
+totmass4=totmass4+cmass
+evolm(cmat,1)=cmass
+evolm(cmat,2)=cdens
+!*stat,evolm,114,115
+cmsel,,ce1
+esel,u,mat,,cmat
+cm,ce1,elem
+*enddo
+
+LENC=C1*W1
+totmass4=totmass4/LENC    !Finding the weight per unit meter 
+
+*else
+*endif
+
+	!Delete array parameters to avoid warning signal 
+	*del,msk,,nopr 
+	*del,evol,,nopr 
+	*del,evolm,,nopr 
+
+	*enddo 		!enddo for hole exploratory steps 
+
+
+	!Check vertical and horizontal L.E. and displacement conditions for large hole
+
+	!Following section checks for ligment efficiency contraint violations, only the dia+delta is checked, since the other
+	!two diameters should be valid 
+
+	!First, check hole does not breach LE contraint in y-axis 
+	*if,DA1,gt,MaxDiam,then
+	totmass2 = 1.1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+	*else
+	*endif
+
+        !Check for diaplacment breaches
+	*if,dendv22a,gt,MaxDef,then
+	totmass2 = 1.1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+	*else
+	*endif
+
+	!Check for horizontal ligamnet efficiency
+	HF4=DA1*HF
+	*if,W2,lt,HF4,then
+	totmass2 = 1.1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+	*else
+	*endif
+
+
+
+
+
+
+
+	!Check vertical and horizontal L.E. and displacement conditions for large hole
+
+	!Following section checks for ligment efficiency contraint violations, only the dia+delta is checked, since the other
+	!two diameters should be valid 
+
+	!First, check hole does not breach LE contraint in y-axis 
+	!*if,DA2,gt,MaxDiam,then
+	!totmass3 = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+	!*else
+	!*endif
+
+        !Check for diaplacment breaches
+	!*if,dendv22b,gt,MaxDef,then
+	!totmass3 = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+	!*else
+	!*endif
+
+	!Check for horizontal ligamnet efficiency
+	!HF4=DA2*HF
+	!*if,W2,lt,HF3,then
+	!totmass3 = 1e6         !Setting the mass to an extremely high number will ensure that it is not selected
+	!*else
+	!*endif
+
+
+
+
+
+      
+
+	!Once the three diameters have been trialled,  the following section finds the optimal one 
+
+	!Selection of diameter which minimises blade mass whilst abiding to the imposed constraints 
+	*if,totmass2,lt,totmass3,and,totmass2,lt,totmass4,then
+	Dopt=DA1
+	totmasspre = totmass2
+	*elseif,totmass3,lt,totmass4,and,totmass3,lt,totmass2,then
+	Dopt=DA2
+	totmasspre = totmass3
+	*else
+	Dopt=DA3
+	totmasspre = totmass4
+	*endif
+
+
+*enddo     !enddo for v1 statement  
+
+!Store relevant data in array form
+UnitWidth(v3)=W1
+HoleDiam(v3)=D1
+BladeWeight(v3)=totmasspre
+OriginalBladeWeight(v3)=totmass1
+Iterations(v3)=n
+Step(v3)=divH
+
+
+W2=W2+0.1
+
+*enddo     !enddo for v3 statement 
